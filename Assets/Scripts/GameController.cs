@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
@@ -11,16 +9,44 @@ public class GameController : MonoBehaviour
     [SerializeField]
     private GameObject agentPrefab = null;
 
-    public static List<int> Bases { get; private set; }
+    [SerializeField]
+    [Range(2, 8)]
+    private int basesQuantity = 100;
+
+    [SerializeField]
+    private GameObject basePrefab = null;
+
+    public static List<int> Bases { get; private set; } = new List<int>();
 
     public static Vector2 Size { get; private set; }
+
+    private Color[] colors = { Color.white, Color.red, Color.green, Color.blue };
 
     // Start is called before the first frame update
     void Start()
     {
+        float aspectRatio = (float)Screen.width / (float)Screen.height;
+        transform.localScale = new Vector2(transform.localScale.y * aspectRatio, transform.localScale.y);
         Size = transform.localScale;
 
-        Bases = GetDistinctBases();
+        if (basePrefab)
+        {
+            GameObject container = GameObject.FindGameObjectWithTag("BasesContainer");
+
+            for (int i = 0; i < basesQuantity; i++)
+            {
+                GameObject baseObject = Instantiate(basePrefab, RandomPositionInBounds(1, 1), Quaternion.identity);
+                baseObject.name = i.ToString();
+                baseObject.transform.parent = container.transform;
+
+                BaseController baseController = baseObject.GetComponent<BaseController>();
+                baseController.index = i % 4 == 0 ? 0 : i;
+                baseObject.GetComponent<SpriteRenderer>().color = colors[i % 4];
+
+                if (Bases.Contains(baseController.index)) continue;
+                Bases.Add(baseController.index);
+            }
+        }
 
         if (agentPrefab)
         {
@@ -41,22 +67,7 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
-    }
 
-    private static List<int> GetDistinctBases()
-    {
-        BaseController[] bases = FindObjectsOfType<BaseController>();
-
-        List<int> distincBases = new();
-
-        foreach (BaseController baseController in bases)
-        {
-            if (distincBases.Contains(baseController.index)) continue;
-            distincBases.Add(baseController.index);
-        }
-
-        return distincBases;
     }
 
     private static Vector2 RandomPosition(float maxX, float maxY)
